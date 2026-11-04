@@ -156,108 +156,102 @@
   });
 })();
 
-/* ============ 魔方 + 粒子姓名 ============ */
+/* ============ 粒子大字「合一」 + 项目魔方 ============ */
 (function () {
   "use strict";
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var hero = document.querySelector(".hero");
-  if (!hero) return;
-
-  // ---- 魔方：纯装饰，aria-hidden，无文字 ----
-  var cols = ["#A855F7", "#C084FC", "#F0ABFC", "#818CF8", "#7DD3FC", "#7C3AED"];
-  var wrap = document.createElement("div"); wrap.className = "fx-cube-wrap"; wrap.setAttribute("aria-hidden", "true");
-  var cube = document.createElement("div"); cube.className = "fx-cube"; wrap.appendChild(cube);
-  for (var f = 1; f <= 6; f++) {
-    var face = document.createElement("div"); face.className = "fx-face f" + f;
-    for (var t = 0; t < 9; t++) { var i = document.createElement("i"); i.style.setProperty("--c", cols[(f + t * 2 + (t % 3)) % 6]); i.style.setProperty("--td", (t * .37 + f * .21).toFixed(2) + "s"); face.appendChild(i); }
-    cube.appendChild(face);
-  }
-  var sh = document.createElement("div"); sh.className = "fx-cube-shadow"; wrap.appendChild(sh);
-  hero.appendChild(wrap);
-  var rx = -24, ry = 35, vx = 0, vy = reduce ? 0 : .35, drag = null;
-  wrap.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY }; wrap.setPointerCapture(e.pointerId); });
-  wrap.addEventListener("pointermove", function (e) { if (!drag) return; vy = (e.clientX - drag.x) * .5; vx = -(e.clientY - drag.y) * .5; drag = { x: e.clientX, y: e.clientY }; });
-  wrap.addEventListener("pointerup", function () { drag = null; });
-  var cubeVisible = true;
-  if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { cubeVisible = en[0].isIntersecting; }).observe(wrap);
-  (function spin() {
-    if (cubeVisible && !document.hidden) {
-      rx += vx; ry += vy;
-      if (!drag) { vx *= .94; vy += ((reduce ? 0 : .35) - vy) * .03; }
-      cube.style.transform = "rotateX(" + rx + "deg) rotateY(" + ry + "deg)";
-    }
-    requestAnimationFrame(spin);
-  })();
-
-  // ---- 粒子姓名：真实文字保留在 h1（透明），canvas 叠加绘制 ----
-  var h1 = hero.querySelector("h1");
-  if (!h1 || reduce || !window.CanvasRenderingContext2D) return;
   var mobile = matchMedia("(max-width: 640px)").matches || !matchMedia("(pointer: fine)").matches;
-  var PAD = 80, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
-  cv.className = "pt-canvas"; cv.setAttribute("aria-hidden", "true");
-  var P = [], dpr = Math.min(devicePixelRatio || 1, 2), W, H, animating = false, mouse = null;
+  var hero = document.querySelector(".hero"), h1 = hero && hero.querySelector("h1");
 
-  function build() {
-    var hr = h1.getBoundingClientRect(), pr = hero.getBoundingClientRect();
-    W = Math.ceil(hr.width + PAD * 2); H = Math.ceil(hr.height + PAD * 2);
-    cv.style.left = (h1.offsetLeft - PAD) + "px"; cv.style.top = (h1.offsetTop - PAD) + "px";
-    cv.style.width = W + "px"; cv.style.height = H + "px"; cv.width = W * dpr; cv.height = H * dpr;
-    // 离屏逐字绘制，位置取自真实排版
-    var off = document.createElement("canvas"); off.width = W; off.height = H;
-    var o = off.getContext("2d"), cs = getComputedStyle(h1);
-    o.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily; o.textBaseline = "middle"; o.textAlign = "center";
-    var grad = o.createLinearGradient(0, 0, W, 0); grad.addColorStop(0, "#F0ABFC"); grad.addColorStop(.5, "#A855F7"); grad.addColorStop(1, "#818CF8");
-    var walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT), node, range = document.createRange();
-    while ((node = walker.nextNode())) {
-      var isGrad = !!node.parentNode.closest(".grad-text");
-      for (var k = 0; k < node.length; k++) {
-        var ch = node.data[k]; if (!ch.trim()) continue;
-        range.setStart(node, k); range.setEnd(node, k + 1);
-        var r = range.getBoundingClientRect();
-        o.fillStyle = isGrad ? grad : "#F4EFFF";
-        o.fillText(ch, r.left - hr.left + PAD + r.width / 2, r.top - hr.top + PAD + r.height / 2);
+  // ---- 项目魔方（装饰，aria-hidden；文字均取自页面已有内容）----
+  var faces = [
+    ["合一AI效能社群", "2000人", "#projects"],
+    ["WorkBuddy训练营", "5期 · 500+学员", "#projects"],
+    ["一人OPC内容流水线", "50 skills · 已开源", "#projects"],
+    ["超级大脑陪跑", "1对1", "#projects"],
+    ["新书《OpenClaw 核心原理与综合应用实战》", "合著", "#book"],
+    ["Kanban官方指南中文译者", "译者", "#about"]
+  ];
+  var metrics = document.getElementById("metrics");
+  if (metrics) {
+    var sec = document.createElement("div"); sec.className = "fx-cube-sec"; sec.setAttribute("aria-hidden", "true");
+    var wrap = document.createElement("div"); wrap.className = "fx-cube-wrap";
+    var cube = document.createElement("div"); cube.className = "fx-cube";
+    faces.forEach(function (f, n) {
+      var d = document.createElement("div"); d.className = "fx-face f" + (n + 1); d.dataset.go = f[2];
+      d.innerHTML = "<i>0" + (n + 1) + "</i><b></b><em></em>";
+      d.querySelector("b").textContent = f[0]; d.querySelector("em").textContent = f[1];
+      cube.appendChild(d);
+    });
+    wrap.appendChild(cube); var sh = document.createElement("div"); sh.className = "fx-cube-shadow"; wrap.appendChild(sh);
+    sec.appendChild(wrap); metrics.parentNode.insertBefore(sec, metrics.nextSibling);
+    var rx = -18, ry = 25, vx = 0, base = reduce ? 0 : .25, vy = base, drag = null, moved = 0, vis = true;
+    wrap.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY }; moved = 0; wrap.setPointerCapture(e.pointerId); });
+    wrap.addEventListener("pointermove", function (e) {
+      if (!drag) return; var dx = e.clientX - drag.x, dy = e.clientY - drag.y; moved += Math.abs(dx) + Math.abs(dy);
+      vy = dx * .45; vx = -dy * .45; drag = { x: e.clientX, y: e.clientY };
+    });
+    wrap.addEventListener("pointerup", function (e) {
+      drag = null;
+      if (moved < 6) { // 轻点：跳到对应区块
+        var el = document.elementFromPoint(e.clientX, e.clientY), face = el && el.closest(".fx-face");
+        var t = face && document.querySelector(face.dataset.go); if (t) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
       }
-    }
-    var data = o.getImageData(0, 0, W, H).data, step = mobile ? 3 : 2, old = P; P = [];
+    });
+    wrap.addEventListener("pointercancel", function () { drag = null; });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { vis = en[0].isIntersecting; }).observe(wrap);
+    (function spin() {
+      if (vis && !document.hidden) {
+        rx += vx; ry += vy;
+        if (!drag) { vx *= .93; rx += (-18 - rx) * .01; vy += (base - vy) * .03; }
+        cube.style.transform = "rotateX(" + rx + "deg) rotateY(" + ry + "deg)";
+      }
+      requestAnimationFrame(spin);
+    })();
+  }
+
+  // ---- 粒子大字「合一」：放在姓名上方，纯装饰 ----
+  if (!h1 || reduce || !window.CanvasRenderingContext2D) return;
+  var box = document.createElement("div"); box.className = "pt-banner"; box.setAttribute("aria-hidden", "true");
+  var cv = document.createElement("canvas"); box.appendChild(cv); hero.insertBefore(box, h1);
+  var ctx = cv.getContext("2d"), P = [], W, H, PAD = 40, dpr = Math.min(devicePixelRatio || 1, 2), animating = false, mouse = null;
+  function build() {
+    var r = box.getBoundingClientRect(); W = Math.round(r.width + PAD * 2); H = Math.round(r.height + PAD * 2);
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var off = document.createElement("canvas"); off.width = W; off.height = H; var o = off.getContext("2d");
+    var fs = Math.min(r.height * .95, r.width / 2.3);
+    o.font = "900 " + fs + "px " + getComputedStyle(h1).fontFamily; o.textBaseline = "middle"; o.textAlign = "center";
+    var g = o.createLinearGradient(W / 2 - fs, 0, W / 2 + fs, 0); g.addColorStop(0, "#F0ABFC"); g.addColorStop(.5, "#A855F7"); g.addColorStop(1, "#818CF8");
+    o.fillStyle = g; o.fillText("合一", W / 2, H / 2 + fs * .04);
+    var data = o.getImageData(0, 0, W, H).data, step = mobile ? 4 : 3, old = P; P = [];
     for (var y = 0; y < H; y += step) for (var x = 0; x < W; x += step) {
-      var idx = (y * W + x) * 4; if (data[idx + 3] < 130) continue;
-      var q = old[P.length];
-      P.push({ hx: x, hy: y, x: q ? q.x : x, y: q ? q.y : y, vx: 0, vy: 0, c: "rgb(" + data[idx] + "," + data[idx + 1] + "," + data[idx + 2] + ")" });
+      var k = (y * W + x) * 4; if (data[k + 3] < 128) continue; var q = old[P.length];
+      P.push({ hx: x, hy: y, x: q ? q.x : Math.random() * W, y: q ? q.y : Math.random() * H, vx: 0, vy: 0,
+        c: Math.random() < .12 ? "#F4EFFF" : "rgb(" + data[k] + "," + data[k + 1] + "," + data[k + 2] + ")", s: Math.random() * 1.2 + (mobile ? 1.6 : 1.4) });
     }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); kick();
+    kick();
   }
   function draw() {
-    ctx.clearRect(0, 0, W, H);
-    var moving = false, s = mobile ? 2.6 : 1.9;
+    ctx.clearRect(0, 0, W, H); var moving = false;
     for (var i = 0; i < P.length; i++) {
       var p = P[i];
-      if (mouse) { var dx = p.x - mouse.x, dy = p.y - mouse.y, d = dx * dx + dy * dy; if (d < 1600) { var f = (1600 - d) / 1600 * 1.2; p.vx += dx * f * .05; p.vy += dy * f * .05; } }
-      p.vx += (p.hx - p.x) * .06; p.vy += (p.hy - p.y) * .06; p.vx *= .84; p.vy *= .84;
-      p.x += p.vx; p.y += p.vy;
-      if (Math.abs(p.vx) + Math.abs(p.vy) > .05 || Math.abs(p.hx - p.x) > .3) moving = true;
-      ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, s, s);
+      if (mouse) { var dx = p.x - mouse.x, dy = p.y - mouse.y, d = dx * dx + dy * dy; if (d < 2500) { var f = (2500 - d) / 2500; p.vx += dx * f * .06; p.vy += dy * f * .06; } }
+      p.vx += (p.hx - p.x) * .045; p.vy += (p.hy - p.y) * .045; p.vx *= .86; p.vy *= .86; p.x += p.vx; p.y += p.vy;
+      if (!moving && (Math.abs(p.vx) + Math.abs(p.vy) > .04 || Math.abs(p.hx - p.x) > .3)) moving = true;
+      ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, p.s, p.s);
     }
     if (moving || mouse) requestAnimationFrame(draw); else animating = false;
   }
   function kick() { if (!animating) { animating = true; requestAnimationFrame(draw); } }
-  function local(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-  function explode(e) {
+  function local(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
+  box.addEventListener("pointerdown", function (e) {
     var m = local(e);
-    P.forEach(function (p) { var dx = p.x - m.x, dy = p.y - m.y, d = Math.sqrt(dx * dx + dy * dy) + 1, f = 18 + Math.random() * 22;
-      p.vx += dx / d * f + (Math.random() - .5) * 8; p.vy += dy / d * f + (Math.random() - .5) * 8; });
+    P.forEach(function (p) { var dx = p.x - m.x, dy = p.y - m.y, d = Math.sqrt(dx * dx + dy * dy) + 1, f = 16 + Math.random() * 26;
+      p.vx += dx / d * f + (Math.random() - .5) * 10; p.vy += dy / d * f + (Math.random() - .5) * 10; });
     kick();
-  }
-  h1.addEventListener("pointerdown", explode);
-  if (!mobile) {
-    h1.addEventListener("mousemove", function (e) { mouse = local(e); kick(); });
-    h1.addEventListener("mouseleave", function () { mouse = null; });
-  }
-  function init() {
-    hero.appendChild(cv); h1.classList.add("pt-on"); build();
-    // 入场：从散开状态聚合
-    P.forEach(function (p) { p.x = p.hx + (Math.random() - .5) * W; p.y = p.hy + (Math.random() - .5) * H; });
-    kick();
-    var rt; addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(build, 150); });
-  }
-  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(init, 300); });
+  });
+  if (!mobile) { box.addEventListener("mousemove", function (e) { mouse = local(e); kick(); }); box.addEventListener("mouseleave", function () { mouse = null; }); }
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
+    build(); var rt, lw = innerWidth; addEventListener("resize", function () { if (innerWidth === lw) return; lw = innerWidth; clearTimeout(rt); rt = setTimeout(build, 150); });
+  });
 })();

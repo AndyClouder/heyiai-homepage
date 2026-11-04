@@ -620,27 +620,29 @@ body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:
   .fx-canvas,.fx-glow{display:none}.card,.btn{transition:none}
 }
 
-/* ============ 魔方 3D cube ============ */
-.fx-cube-wrap{position:absolute;top:70px;right:2%;width:var(--cube);height:var(--cube);--cube:120px;
-  perspective:700px;z-index:1!important;cursor:grab;touch-action:none;animation:fxFloat 7s ease-in-out infinite}
-.fx-cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(-24deg) rotateY(35deg)}
-.fx-face{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;border-radius:10px;
-  background:rgba(21,13,51,.55);border:1px solid rgba(192,132,252,.45);box-shadow:0 0 24px rgba(168,85,247,.35) inset;backface-visibility:visible}
-.fx-face i{border-radius:5px;background:var(--c,#A855F7);opacity:.85;box-shadow:0 0 8px var(--c,#A855F7);animation:fxTile 4s ease-in-out infinite;animation-delay:var(--td,0s)}
-@keyframes fxTile{0%,100%{opacity:.55}50%{opacity:1}}
+/* ============ 粒子大字「合一」（装饰） ============ */
+.hero > .pt-banner{position:relative;width:100%;height:200px;margin:4px 0 6px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.pt-banner canvas{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px)}
+@media (max-width:640px){.hero > .pt-banner{height:130px}}
+
+/* ============ 项目魔方 ============ */
+.fx-cube-sec{position:relative;z-index:2;padding:100px 0 90px;display:flex;justify-content:center}
+.fx-cube-wrap{--cube:clamp(200px,58vw,300px);width:var(--cube);height:var(--cube);perspective:1100px;cursor:grab;touch-action:pan-y}
+.fx-cube-wrap:active{cursor:grabbing}
+.fx-cube{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.fx-face{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:10px;
+  padding:22px;border-radius:18px;text-align:left;user-select:none;
+  background:linear-gradient(150deg,#2D1B69,#170E3A);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border:1px solid rgba(192,132,252,.55);box-shadow:0 0 40px rgba(168,85,247,.35) inset,0 0 30px rgba(168,85,247,.25)}
+.fx-face b{font-family:var(--font-serif);font-size:clamp(19px,5.4vw,25px);line-height:1.3;color:var(--text)}
+.fx-face em{font-style:normal;font-size:clamp(13px,3.6vw,15px);color:var(--pink);padding:3px 10px;border:1px solid rgba(240,171,252,.4);border-radius:99px}
+.fx-face i{font-style:normal;font-size:11px;letter-spacing:.2em;color:var(--muted)}
+.fx-face::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--grad);opacity:.08;pointer-events:none}
 .fx-face.f1{transform:rotateY(0) translateZ(calc(var(--cube)/2))}
 .fx-face.f2{transform:rotateY(90deg) translateZ(calc(var(--cube)/2))}
 .fx-face.f3{transform:rotateY(180deg) translateZ(calc(var(--cube)/2))}
 .fx-face.f4{transform:rotateY(-90deg) translateZ(calc(var(--cube)/2))}
 .fx-face.f5{transform:rotateX(90deg) translateZ(calc(var(--cube)/2))}
 .fx-face.f6{transform:rotateX(-90deg) translateZ(calc(var(--cube)/2))}
-.fx-cube-shadow{position:absolute;left:10%;right:10%;bottom:-38%;height:16%;border-radius:50%;background:radial-gradient(rgba(168,85,247,.45),transparent 70%);filter:blur(6px)}
-@media (max-width:640px){.fx-cube-wrap{--cube:62px;top:18px;right:4px}}
-@media (prefers-reduced-motion:reduce){.fx-cube-wrap,.fx-face i{animation:none!important}}
-
-/* ============ 粒子姓名 ============ */
-.hero h1.pt-on{color:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.hero h1.pt-on .grad-text{background:none;-webkit-text-fill-color:transparent;animation:none}
-.pt-canvas{position:absolute;pointer-events:none;z-index:3}
-.hero > .fx-cube-wrap,.hero > .pt-canvas{position:absolute}
-.hero > .pt-canvas{z-index:3}
+.fx-cube-shadow{position:absolute;left:15%;right:15%;bottom:-22%;height:10%;border-radius:50%;background:radial-gradient(rgba(168,85,247,.5),transparent 70%);filter:blur(8px)}
+.fx-cube-wrap{position:relative}

@@ -210,11 +210,12 @@
     })();
   }
 
-  // ---- 粒子大字「合一」：放在姓名上方，纯装饰 ----
-  if (!h1 || reduce || !window.CanvasRenderingContext2D) return;
+  // ---- 粒子大字「合一」：放在姓名上方，纯装饰；缓慢呼吸漂移 + 指尖轻抚涟漪 ----
+  if (!h1 || !window.CanvasRenderingContext2D) return;
   var box = document.createElement("div"); box.className = "pt-banner"; box.setAttribute("aria-hidden", "true");
   var cv = document.createElement("canvas"); box.appendChild(cv); hero.insertBefore(box, h1);
-  var ctx = cv.getContext("2d"), P = [], W, H, PAD = 40, dpr = Math.min(devicePixelRatio || 1, 2), animating = false, mouse = null;
+  var ctx = cv.getContext("2d"), P = [], W, H, PAD = 40, dpr = Math.min(devicePixelRatio || 1, 2), raf = null, visible = true;
+  var ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999, active: false, str: 0 }, fx = null;
   function build() {
     var r = box.getBoundingClientRect(); W = Math.round(r.width + PAD * 2); H = Math.round(r.height + PAD * 2);
     cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -225,33 +226,64 @@
     o.fillStyle = g; o.fillText("合一", W / 2, H / 2 + fs * .04);
     var data = o.getImageData(0, 0, W, H).data, step = mobile ? 4 : 3, old = P; P = [];
     for (var y = 0; y < H; y += step) for (var x = 0; x < W; x += step) {
-      var k = (y * W + x) * 4; if (data[k + 3] < 128) continue; var q = old[P.length];
-      P.push({ hx: x, hy: y, x: q ? q.x : Math.random() * W, y: q ? q.y : Math.random() * H, vx: 0, vy: 0,
-        c: Math.random() < .12 ? "#F4EFFF" : "rgb(" + data[k] + "," + data[k + 1] + "," + data[k + 2] + ")", s: Math.random() * 1.2 + (mobile ? 1.6 : 1.4) });
+      var k = (y * W + x) * 4; if (data[k + 3] < 128) continue; var q = old[P.length], edge = Math.random() < .5;
+      P.push({ tx: x, ty: y,
+        x: q ? q.x : (reduce ? x : (edge ? (Math.random() < .5 ? -30 : W + 30) : Math.random() * W)),
+        y: q ? q.y : (reduce ? y : Math.random() * H), vx: 0, vy: 0,
+        c: Math.random() < .12 ? "#F4EFFF" : "rgb(" + data[k] + "," + data[k + 1] + "," + data[k + 2] + ")",
+        s: Math.random() * 1.2 + (mobile ? 1.5 : 1.3), ph: Math.random() * 6.283,
+        orb: 1.2 + Math.random() * 3, spd: .4 + Math.random() * .7 });
     }
-    kick();
+    if (reduce) drawStatic(); else if (!raf) raf = requestAnimationFrame(loop);
   }
-  function draw() {
-    ctx.clearRect(0, 0, W, H); var moving = false;
+  function drawStatic() { ctx.clearRect(0, 0, W, H); P.forEach(function (p) { ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, p.s, p.s); }); }
+  function loop() {
+    raf = null; if (!visible || document.hidden) return;
+    ctx.clearRect(0, 0, W, H);
+    var now = performance.now(), t = now * .001, R = mobile ? 56 : 64, R2 = R * R;
+    // 指针平滑跟随 + 力度淡入淡出 → 丝滑
+    if (ptr.active) { if (ptr.sx < -999) { ptr.sx = ptr.x; ptr.sy = ptr.y; } ptr.sx += (ptr.x - ptr.sx) * .18; ptr.sy += (ptr.y - ptr.sy) * .18; }
+    ptr.str += ((ptr.active ? 1 : 0) - ptr.str) * .06;
+    // 自动涟漪：缓慢从左向右扫过
+    if (!fx || now - fx.t0 > fx.dur + 5000) fx = { t0: now, dur: 2600 };
+    var age = (now - fx.t0) / fx.dur, front = age < 1 ? -40 + age * (W + 80) : -9999;
     for (var i = 0; i < P.length; i++) {
       var p = P[i];
-      if (mouse) { var dx = p.x - mouse.x, dy = p.y - mouse.y, d = dx * dx + dy * dy; if (d < 2500) { var f = (2500 - d) / 2500; p.vx += dx * f * .06; p.vy += dy * f * .06; } }
-      p.vx += (p.hx - p.x) * .045; p.vy += (p.hy - p.y) * .045; p.vx *= .86; p.vy *= .86; p.x += p.vx; p.y += p.vy;
-      if (!moving && (Math.abs(p.vx) + Math.abs(p.vy) > .04 || Math.abs(p.hx - p.x) > .3)) moving = true;
+      var wave = 1 + .55 * Math.sin(t * .8 - p.tx * .004);
+      var ox = p.tx + Math.cos(t * p.spd + p.ph) * p.orb * wave;
+      var oy = p.ty + Math.sin(t * p.spd * 1.15 + p.ph) * p.orb * wave;
+      var inf = Math.max(0, 1 - Math.abs(p.tx - front) / 50);
+      if (inf > 0) { ox += inf * 6; oy += Math.sin(t * 4 + p.tx * .04) * inf * 4; }
+      if (ptr.str > .01) {
+        var dx = p.tx - ptr.sx, dy = p.ty - ptr.sy, d2 = dx * dx + dy * dy;
+        if (d2 < R2 && d2 > .01) {
+          var d = Math.sqrt(d2), k = (1 - d / R); k = k * k * (3 - 2 * k) * ptr.str; // smoothstep，柔和边缘
+          ox += dx / d * k * 26 + Math.sin(t * 3 + d * .15) * k * 3; oy += dy / d * k * 26 + Math.cos(t * 3 + d * .15) * k * 3;
+        }
+      }
+      // 低刚度 + 阻尼：缓慢回到轨道点
+      p.vx += (ox - p.x) * .012; p.vy += (oy - p.y) * .012; p.vx *= .9; p.vy *= .9;
+      p.x += p.vx; p.y += p.vy;
+      ctx.globalAlpha = .78 + .22 * Math.sin(t * 1.3 + p.ph);
       ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, p.s, p.s);
     }
-    if (moving || mouse) requestAnimationFrame(draw); else animating = false;
+    ctx.globalAlpha = 1; raf = requestAnimationFrame(loop);
   }
-  function kick() { if (!animating) { animating = true; requestAnimationFrame(draw); } }
-  function local(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
-  box.addEventListener("pointerdown", function (e) {
-    var m = local(e);
-    P.forEach(function (p) { var dx = p.x - m.x, dy = p.y - m.y, d = Math.sqrt(dx * dx + dy * dy) + 1, f = 16 + Math.random() * 26;
-      p.vx += dx / d * f + (Math.random() - .5) * 10; p.vy += dy / d * f + (Math.random() - .5) * 10; });
-    kick();
-  });
-  if (!mobile) { box.addEventListener("mousemove", function (e) { mouse = local(e); kick(); }); box.addEventListener("mouseleave", function () { mouse = null; }); }
+  function wake() { if (!reduce && !raf && visible && !document.hidden) raf = requestAnimationFrame(loop); }
+  function at(x, y) { var r = cv.getBoundingClientRect(); ptr.x = (x - r.left) * W / r.width; ptr.y = (y - r.top) * H / r.height; ptr.active = true; }
+  function off() { ptr.active = false; ptr.sx = ptr.sy = -9999; }
+  if (!reduce) {
+    box.style.touchAction = "pan-y"; // 竖向滑动仍可滚动页面，同时跟踪手指
+    box.addEventListener("pointermove", function (e) { at(e.clientX, e.clientY); });
+    box.addEventListener("pointerdown", function (e) { at(e.clientX, e.clientY); });
+    box.addEventListener("pointerleave", off); box.addEventListener("pointercancel", off); box.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") off(); });
+    box.addEventListener("touchstart", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
+    box.addEventListener("touchmove", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
+    box.addEventListener("touchend", off, { passive: true }); box.addEventListener("touchcancel", off, { passive: true });
+    document.addEventListener("visibilitychange", wake);
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; wake(); }).observe(box);
+  }
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
-    build(); var rt, lw = innerWidth; addEventListener("resize", function () { if (innerWidth === lw) return; lw = innerWidth; clearTimeout(rt); rt = setTimeout(build, 150); });
+    build(); var rt, lw = innerWidth; addEventListener("resize", function () { if (innerWidth === lw) return; lw = innerWidth; clearTimeout(rt); rt = setTimeout(build, 200); });
   });
 })();

@@ -621,7 +621,7 @@ body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:
 }
 
 /* ============ 粒子大字「合一」（装饰） ============ */
-.hero > .pt-banner{position:relative;width:100%;height:200px;margin:4px 0 6px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.hero > .pt-banner{position:relative;width:100%;height:200px;margin:4px 0 6px;cursor:default;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
 .pt-banner canvas{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px)}
 @media (max-width:640px){.hero > .pt-banner{height:130px}}
 

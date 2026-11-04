@@ -132,7 +132,9 @@
 
   // 英雄区视差
   var hero = document.querySelector(".hero");
-  if (hero) addEventListener("scroll", function () { var y = Math.min(scrollY, 600); hero.style.transform = "translate3d(0," + y * .18 + "px,0)"; hero.style.opacity = String(1 - y / 900); }, { passive: true });
+  // 只向上位移（不会压到下一区块）；触屏/窄屏不做位移，只淡出
+  var heroShift = matchMedia("(hover: hover) and (pointer: fine) and (min-width: 641px)").matches;
+  if (hero) addEventListener("scroll", function () { var y = Math.min(scrollY, 600); if (heroShift) hero.style.transform = "translate3d(0," + (-y * .08) + "px,0)"; hero.style.opacity = String(Math.max(.35, 1 - y / 900)); }, { passive: true });
 
   if (!fine) return;
   // 光标辉光

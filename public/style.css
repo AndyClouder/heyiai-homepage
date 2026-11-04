@@ -656,3 +656,15 @@ body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:
 .proj.fx-hl{animation:fxHl 2.2s ease-out}
 @keyframes fxHl{0%,60%{box-shadow:0 0 0 2px var(--pink),0 0 36px var(--glow-pink)}100%{box-shadow:none}}
 @media (min-width:641px){.wing-art{top:-110px;right:-90px;width:340px}}
+/* ===== fix2: 首屏间距节奏 & 层级 ===== */
+.book-pill{margin-bottom:var(--space-4)}
+.hero .badges{margin-bottom:var(--space-5)}
+.hero{z-index:2;isolation:isolate}
+.hero ~ .section{position:relative;z-index:3}
+@media (max-width:640px){
+  .hero .tagline{margin-bottom:var(--space-3)}
+  .hero-note{margin-bottom:var(--space-4)}
+  .book-pill{margin-top:0;margin-bottom:20px}
+  .hero .badges{margin-bottom:32px}
+  .hero{padding-bottom:var(--space-3)}
+}

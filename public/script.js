@@ -165,15 +165,16 @@
 
   // ---- 项目魔方（装饰，aria-hidden；文字均取自页面已有内容）----
   var faces = [
-    ["合一AI效能社群", "2000人", "#projects"],
-    ["WorkBuddy训练营", "5期 · 500+学员", "#projects"],
-    ["一人OPC内容流水线", "50 skills · 已开源", "#projects"],
-    ["超级大脑陪跑", "1对1", "#projects"],
-    ["新书《OpenClaw 核心原理与综合应用实战》", "合著", "#book"],
+    ["合一AI效能社群", "2000人", 0],
+    ["WorkBuddy训练营", "5期 · 500+学员", 1],
+    ["一人OPC内容流水线", "50 skills · 已开源", 2],
+    ["超级大脑陪跑", "1对1", 3],
+    ["合一AI效能实验室", "创始人", "#about"],
     ["Kanban官方指南中文译者", "译者", "#about"]
   ];
-  var metrics = document.getElementById("metrics");
-  if (metrics) {
+  var projSec = document.getElementById("projects"), grid = projSec && projSec.querySelector(".proj-grid");
+  var cards = projSec ? projSec.querySelectorAll(".proj") : [];
+  if (grid) {
     var sec = document.createElement("div"); sec.className = "fx-cube-sec"; sec.setAttribute("aria-hidden", "true");
     var wrap = document.createElement("div"); wrap.className = "fx-cube-wrap";
     var cube = document.createElement("div"); cube.className = "fx-cube";
@@ -184,7 +185,7 @@
       cube.appendChild(d);
     });
     wrap.appendChild(cube); var sh = document.createElement("div"); sh.className = "fx-cube-shadow"; wrap.appendChild(sh);
-    sec.appendChild(wrap); metrics.parentNode.insertBefore(sec, metrics.nextSibling);
+    sec.appendChild(wrap); grid.parentNode.insertBefore(sec, grid);
     var rx = -18, ry = 25, vx = 0, base = reduce ? 0 : .25, vy = base, drag = null, moved = 0, vis = true;
     wrap.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY }; moved = 0; wrap.setPointerCapture(e.pointerId); });
     wrap.addEventListener("pointermove", function (e) {
@@ -195,7 +196,9 @@
       drag = null;
       if (moved < 6) { // 轻点：跳到对应区块
         var el = document.elementFromPoint(e.clientX, e.clientY), face = el && el.closest(".fx-face");
-        var t = face && document.querySelector(face.dataset.go); if (t) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+        if (!face) return; var g = face.dataset.go, t = /^\d$/.test(g) ? cards[+g] : document.querySelector(g);
+        if (t) { t.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+          t.classList.remove("fx-hl"); void t.offsetWidth; t.classList.add("fx-hl"); setTimeout(function () { t.classList.remove("fx-hl"); }, 2200); }
       }
     });
     wrap.addEventListener("pointercancel", function () { drag = null; });
@@ -214,10 +217,12 @@
   if (!h1 || !window.CanvasRenderingContext2D) return;
   var box = document.createElement("div"); box.className = "pt-banner"; box.setAttribute("aria-hidden", "true");
   var cv = document.createElement("canvas"); box.appendChild(cv); hero.insertBefore(box, h1);
+  function place() { box.style.top = (h1.offsetTop + h1.offsetHeight / 2 - box.offsetHeight / 2) + "px"; box.style.left = (h1.offsetLeft + (mobile ? 18 : 60)) + "px"; box.style.width = (h1.offsetWidth - (mobile ? 18 : 60)) + "px"; }
+  place();
   var ctx = cv.getContext("2d"), P = [], W, H, PAD = 40, dpr = Math.min(devicePixelRatio || 1, 2), raf = null, visible = true;
   var ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999, active: false, str: 0 }, fx = null;
   function build() {
-    var r = box.getBoundingClientRect(); W = Math.round(r.width + PAD * 2); H = Math.round(r.height + PAD * 2);
+    place(); var r = box.getBoundingClientRect(); W = Math.round(r.width + PAD * 2); H = Math.round(r.height + PAD * 2);
     cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var off = document.createElement("canvas"); off.width = W; off.height = H; var o = off.getContext("2d");
     var fs = Math.min(r.height * .95, r.width / 2.3);
@@ -273,13 +278,13 @@
   function at(x, y) { var r = cv.getBoundingClientRect(); ptr.x = (x - r.left) * W / r.width; ptr.y = (y - r.top) * H / r.height; ptr.active = true; }
   function off() { ptr.active = false; ptr.sx = ptr.sy = -9999; }
   if (!reduce) {
-    box.style.touchAction = "pan-y"; // 竖向滑动仍可滚动页面，同时跟踪手指
-    box.addEventListener("pointermove", function (e) { at(e.clientX, e.clientY); });
-    box.addEventListener("pointerdown", function (e) { at(e.clientX, e.clientY); });
-    box.addEventListener("pointerleave", off); box.addEventListener("pointercancel", off); box.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") off(); });
-    box.addEventListener("touchstart", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
-    box.addEventListener("touchmove", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
-    box.addEventListener("touchend", off, { passive: true }); box.addEventListener("touchcancel", off, { passive: true });
+    // 粒子层在姓名后方且 pointer-events:none；事件挂在 hero 上，不挡任何链接点击
+    hero.addEventListener("pointermove", function (e) { at(e.clientX, e.clientY); });
+    hero.addEventListener("pointerdown", function (e) { at(e.clientX, e.clientY); });
+    hero.addEventListener("pointerleave", off); hero.addEventListener("pointercancel", off); hero.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") off(); });
+    hero.addEventListener("touchstart", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
+    hero.addEventListener("touchmove", function (e) { var t0 = e.touches[0]; at(t0.clientX, t0.clientY); }, { passive: true });
+    hero.addEventListener("touchend", off, { passive: true }); hero.addEventListener("touchcancel", off, { passive: true });
     document.addEventListener("visibilitychange", wake);
     if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; wake(); }).observe(box);
   }

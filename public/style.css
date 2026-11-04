@@ -646,3 +646,13 @@ body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:
 .fx-face.f6{transform:rotateX(-90deg) translateZ(calc(var(--cube)/2))}
 .fx-cube-shadow{position:absolute;left:15%;right:15%;bottom:-22%;height:10%;border-radius:50%;background:radial-gradient(rgba(168,85,247,.5),transparent 70%);filter:blur(8px)}
 .fx-cube-wrap{position:relative}
+
+/* ===== fix: 粒子字退为姓名背景层；羽翼线上移；项目区魔方 ===== */
+.hero > .pt-banner{position:absolute;z-index:0;height:200px;margin:0;pointer-events:none;opacity:.35}
+@media (max-width:640px){.hero > .pt-banner{height:120px}}
+.hero{touch-action:pan-y}
+.wing-art{top:-70px;right:-50px;width:min(430px,78%)}
+.fx-cube-sec{padding:70px 0 90px}
+.proj.fx-hl{animation:fxHl 2.2s ease-out}
+@keyframes fxHl{0%,60%{box-shadow:0 0 0 2px var(--pink),0 0 36px var(--glow-pink)}100%{box-shadow:none}}
+@media (min-width:641px){.wing-art{top:-110px;right:-90px;width:340px}}

@@ -574,3 +574,48 @@ a { color: var(--link); text-decoration: none; }
   .book-meta div { justify-content: center; }
   .book-meta dt { min-width: 0; }
 }
+
+/* ============ Motion layer (feat/motion) ============ */
+.fx-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.85}
+.fx-aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:radial-gradient(40% 35% at 20% 20%,rgba(168,85,247,.22),transparent 70%),
+             radial-gradient(35% 30% at 80% 30%,rgba(129,140,248,.18),transparent 70%),
+             radial-gradient(40% 35% at 50% 85%,rgba(240,171,252,.14),transparent 70%);
+  animation:fxBreeze 22s ease-in-out infinite alternate;filter:blur(20px)}
+@keyframes fxBreeze{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(3%,-2%,0) rotate(6deg)}100%{transform:translate3d(-3%,2%,0) rotate(-4deg)}}
+.fx-glow{position:fixed;left:0;top:0;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;
+  pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(192,132,252,.16),transparent 65%);
+  transform:translate3d(-999px,-999px,0);transition:opacity .3s;mix-blend-mode:screen}
+.fx-progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--grad);
+  transform-origin:0 50%;transform:scaleX(0);box-shadow:0 0 10px var(--glow-purple)}
+body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:relative;z-index:2}
+/* entrance stagger */
+.reveal{transition-delay:var(--d,0ms)}
+/* hero load-in */
+.hero .avatar-ring{animation:fxFloat 6s ease-in-out infinite}
+@keyframes fxFloat{0%,100%{translate:0 0}50%{translate:0 -8px}}
+.grad-text{background-size:200% 100%;animation:fxShine 6s linear infinite}
+@keyframes fxShine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.tag-new,.tag-hot{animation:fxPulse 2.4s ease-in-out infinite}
+@keyframes fxPulse{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,.45)}50%{box-shadow:0 0 0 6px rgba(248,113,113,0)}}
+/* cards: tilt + spotlight + border trace */
+.card{position:relative;transform-style:preserve-3d;will-change:transform;
+  transition:transform .35s var(--ease-out),box-shadow .35s,border-color .35s}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(240,171,252,.14),transparent 60%)}
+.card:hover::after{opacity:1}
+.card:hover{box-shadow:0 12px 40px rgba(10,4,30,.5),0 0 30px var(--glow-purple);border-color:var(--border-glow)}
+.btn{position:relative;overflow:hidden;transition:transform .25s var(--ease-out),box-shadow .25s}
+.btn::before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .6s}
+.btn:hover::before{left:120%}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px var(--glow-purple)}
+.section-title.in::after{animation:fxLine .9s var(--ease-out) both}
+@keyframes fxLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.metric.in .num{animation:fxPop .6s var(--ease-out) both}
+@keyframes fxPop{0%{transform:scale(.8);opacity:.2}100%{transform:scale(1);opacity:1}}
+@media (hover:none){.fx-glow{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .fx-aurora,.hero .avatar-ring,.grad-text,.tag-new,.tag-hot,.metric.in .num{animation:none!important}
+  .fx-canvas,.fx-glow{display:none}.card,.btn{transition:none}
+}

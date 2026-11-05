@@ -668,3 +668,13 @@ body>*:not(.fx-canvas):not(.fx-aurora):not(.fx-glow):not(.fx-progress){position:
   .hero .badges{margin-bottom:32px}
   .hero{padding-bottom:var(--space-3)}
 }
+
+/* ============ 高校分享 ============ */
+.campus-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+@media (min-width: 720px) { .campus-grid { grid-template-columns: 1fr 1fr; } }
+.campus { margin: 0; padding: 0; overflow: hidden; }
+.campus img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover;
+  transition: transform var(--dur-base) var(--ease-out); }
+.campus:hover img { transform: scale(1.03); }
+.campus figcaption { padding: var(--space-3); font-size: var(--fs-sm); color: var(--muted); line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { .campus img { transition: none; } .campus:hover img { transform: none; } }

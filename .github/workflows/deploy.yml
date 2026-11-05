@@ -1,0 +1,48 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID 未配置，跳过生产部署。请在仓库 Settings → Secrets and variables → Actions 中添加。本机可用：WRANGLER_CACHE_DIR=/tmp/wcache npx wrangler deploy"
+          fi
+
+      - name: Checkout
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Deploy Worker
+        if: steps.secrets.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

@@ -1,0 +1,81 @@
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID 未配置，跳过 Workers 预览。请在仓库 Settings → Secrets and variables → Actions 中添加后重试。本机可用：WRANGLER_CACHE_DIR=/tmp/wcache npx wrangler versions upload"
+          fi
+
+      - name: Checkout
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Upload Workers preview version
+        if: steps.secrets.outputs.ready == 'true'
+        id: upload
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload
+
+      - name: Comment preview URL on PR
+        if: steps.secrets.outputs.ready == 'true' && steps.upload.outputs.deployment-url != ''
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.upload.outputs.deployment-url }}
+        with:
+          script: |
+            const body = `### Workers 预览\n\n${process.env.PREVIEW_URL}\n\n（由 \`wrangler versions upload\` 自动生成）`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = "### Workers 预览";
+            const existing = comments.find((c) => c.user?.type === "Bot" && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
